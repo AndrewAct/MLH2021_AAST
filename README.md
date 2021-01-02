@@ -9,7 +9,7 @@ A popular method is deploying CNN (Convolution Neural Network). And that's what 
 
 ## Methodology 
 
-The operator wants to build a project to allow users to drop images. Then, this project will analyze the features and transfer the art style from one to another.
+The operator wants to build a project to analyze the features and transfer the art style from one to another.
 
 ## Example 
 
