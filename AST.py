@@ -24,9 +24,12 @@ tf.executing_eagerly()
 #print("Eager function: {}".format(tf.executing_eagerly))
 
 # load the images
-content_path = input("Enter the path of content image: ")
+# content_path = input("Enter the path of content image: ")
+#
+# style_path = input("Enter the path of style image: ")
 
-style_path = input("Enter the path of style image: ")
+content_path = '/Users/chenzhuo/Desktop/Green_Sea_Turtle_grazing_seagrass.jpg'
+style_path = '/Users/chenzhuo/Desktop/The_Great_Wave_off_Kanagawa.jpg'
 
 # Define the load_img function
 def load_img(path_to_img):
@@ -35,16 +38,17 @@ def load_img(path_to_img):
     img = Image.open(path_to_img)
     long = max(img.size)
     scale = max_dim/long
-    img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), PIL.Image.ANTIALIAS)
+    img = img.resize((round(img.size[0]*scale), round(img.size[1]*scale)), Image.ANTIALIAS)
 
     img = kp_image.img_to_array(img)
 
-    img = np.expand_dims(img, axis = 0)
+    img = np.expand_dims(img, axis=0)
 
     return img
 
 def imshow(img, title = None):
-    out = np.squeeze(img, axis = 0).astype('uint8')
+    out = np.squeeze(img, axis = 0)
+    out = out.astype('uint8')
     plt.imshow(out)
     if title is not None:
         plt.title(title)
@@ -53,7 +57,7 @@ def imshow(img, title = None):
 plt.figure(figsize= (10, 10))
 
 content = load_img(content_path).astype('uint8')
-style = load_img(style_path)
+style = load_img(style_path).astype('uint8')
 
 plt.subplot(1,2,1)
 imshow(content, 'Content Image')
@@ -183,6 +187,7 @@ def grads_computer(cfg):
 import IPython.display
 
 def ast(content_path, style_path, num_iterations = 1000, content_weight = 1000, style_weight = 0.01):
+    display_num = 100
     model = new_model()
     for layer in model.layers:
         layer.trainable = False
@@ -210,10 +215,12 @@ def ast(content_path, style_path, num_iterations = 1000, content_weight = 1000, 
     }
 
     # Display
-    num_rows = 2
-    num_cols = 5
+    # num_rows = 2
+    # num_cols = 5
+    num_rows = (num_iterations / display_num) // 5
 
-    display_interval = num_iterations/(num_rows* num_cols)
+
+    #display_interval = num_iterations/(num_rows* num_cols)
     start_time = time.time()
     global_start = time.time()
 
@@ -235,7 +242,7 @@ def ast(content_path, style_path, num_iterations = 1000, content_weight = 1000, 
             best_loss = loss
             best_img = deprocess(init_image.numpy())
 
-        if i % display_interval == 0:
+        if i % display_num == 0:
             start_time = time.time()
 
             plot_img = init_image.numpy()
@@ -248,16 +255,25 @@ def ast(content_path, style_path, num_iterations = 1000, content_weight = 1000, 
                   'style loss: {:.4e}, '
                   'content loss: {:.4e}, '
                   'time: {:.4f}s'.format(loss, style_score, content_score, time.time() - start_time))
-        print('Total time: {:.4f}s'.format(time.time() - global_start))
-        IPython.display.clear_output(wait= True)
-        plt.figure(figsize= (14,4))
-        for i, img in enumerate(imgs):
-            plt.subplot(num_rows, num_cols, i+1)
-            plt.imshow(img)
-            plt.xticks([])
-            plt.yticks([])
 
-        return best_img, best_loss
+        if iter_count > num_rows * 5: continue
+        plt.subplot(num_rows, 5, iter_count)
+        plot_img = init_image.numpy()
+        plot_img = deprocess(plot_img)
+        plt.imshow(plot_img)
+        plt.title('Iteration {}'.format(i+1))
+        iter_count += 1
+
+    print('Total time: {:.4f}s'.format(time.time() - global_start))
+        # IPython.display.clear_output(wait= True)
+        # plt.figure(figsize= (14,4))
+        # for i, img in enumerate(imgs):
+        #     plt.subplot(num_rows, num_cols, i+1)
+        #     plt.imshow(img)
+        #     plt.xticks([])
+        #     plt.yticks([])
+
+    return best_img, best_loss
 
 
 best, best_loss = ast(content_path, style_path, num_iterations=1000)
@@ -281,3 +297,17 @@ def results(bes_img, content_path, style_path, show_large_final = True):
         plt.imshow(bes_img)
         plt.title('Output Image')
         plt.show()
+
+
+# Test the model and get results
+# Example
+best, best_loss = ast(content_path, style_path)
+results(best, content_path, style_path)
+
+# Generate a new one
+new_content = '/Users/chenzhuo/Desktop/black-swan.JPG'
+new_style = '/Users/chenzhuo/Desktop/MonetLotus.jpg'
+
+best, best_loss = ast(new_content, new_style, num_iterations=1000)
+
+PIL.Image.fromarray(best)
